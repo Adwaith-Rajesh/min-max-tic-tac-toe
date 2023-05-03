@@ -1,13 +1,16 @@
 import flet as ft
 
+from core import Utils
 
-class GameState:
+
+class GameState(Utils):
     '''
     Store the current state of the game
     '''
 
     def __init__(self) -> None:
-        self.board = [[8] * 3] * 3
+        super().__init__(self)
+        self.board = [[0] * 3 for _ in range(3)]
         self.current_player = 1  # 1 - > X; 2 -> O
 
     def set_cell_val(self, row: int, col: int) -> None:
@@ -26,6 +29,8 @@ def button_clicked(e: ft.ContainerTapEvent, state: GameState, row: int, col: int
         size=20,
         color=ft.colors.BLACK
     )
+    print(state.check_empty_space_exists())
+    print(state.check_winner())
     e.page.update()
 
 
@@ -50,7 +55,7 @@ def main(page: ft.Page) -> None:
                         width=150,
                         height=150,
                         border_radius=10,
-                        on_click=lambda e, state=game, row=1, col=j: button_clicked(
+                        on_click=lambda e, state=game, row=i, col=j: button_clicked(
                             e, state, row, col
                         )
                     ) for j in range(3)
