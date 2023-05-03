@@ -33,82 +33,86 @@ class GameState(Utils):
         self.current_player = 1
 
 
-def show_popup_msg(page: ft.Page, msg: str, yes_callback: ClbkFnType, no_callback: ClbkFnType) -> None:
+class TicTacToe(ft.UserControl):
 
-    def close_dlg(e: ft.ContainerTapEvent, clbk: ClbkFnType) -> None:
-        dlg.open = False
-        e.page.update()
-        clbk()
+    def __init__(self) -> None:
+        super().__init__()
+        self.g_state = GameState()
 
-    dlg = ft.AlertDialog(
-        title=ft.Text('Tic Tac Toe'),
-        content=ft.Text(msg),
-        actions=[
-            ft.TextButton(
-                'Yes', on_click=lambda e: close_dlg(e, yes_callback)),
-            ft.TextButton('No', on_click=lambda e: close_dlg(e, no_callback))
-        ]
-    )
-
-    page.dialog = dlg
-    dlg.open = True
-    page.update()
-
-
-def reset_board(page: ft.Page, state: GameState, click_reset_fn: ClkResetFnType) -> None:
-    state.reset()
-
-    for row in page.controls:  # gives the three rows that we initially set
-        for col in row.controls:  # gives each ft.Container
-            col.content = None
-            col.no_click = click_reset_fn
-
-    page.update()
-
-
-def button_clicked(e: ft.ContainerTapEvent, state: GameState, row: int, col: int) -> None:
-    state.set_cell_val(row, col)
-    e.control.on_click = None
-    e.control.content = ft.Icon(
-        name='circle_outlined' if state.current_player == 1 else 'close_outlined',
-        size=20,
-        color=ft.colors.BLACK
-    )
-    if (w := state.check_winner()) in (win_msg := {
-        1: 'X Won, would you like to continue?',
-        2: '0 Won, would you like to continue?'
-    }):
-        show_popup_msg(e.page, win_msg[w], lambda: reset_board(
-            e.page, state, button_clicked), e.page.window_close)
-
-    if (w == 0 and state.check_empty_space_exists() is False):
-        show_popup_msg(e.page, 'It\'s a Draw. Would you like to continue?',
-                       lambda: reset_board(e.page, state, button_clicked), e.page.window_close)
-    e.page.update()
-
-
-def build_ui(page: ft.Page, game: GameState) -> None:
-    for i in range(3):
-        page.add(
-            ft.Row(
-                [
-                    ft.Container(
-                        content=ft.Icon(),
-                        margin=10,
-                        padding=10,
-                        alignment=ft.alignment.center,
-                        bgcolor=ft.colors.GREEN_200,
-                        width=150,
-                        height=150,
-                        border_radius=10,
-                        on_click=lambda e, state=game, row=i, col=j: button_clicked(
-                            e, state, row, col
-                        )
-                    ) for j in range(3)
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-            )
+    def build(self):
+        self.game_grid = ft.GridView(
+            runs_count=3,
+            child_aspect_ratio=1.0,
+            spacing=5,
+            run_spacing=5,
         )
+
+        for i in range(9):
+            self.game_grid.controls.append(
+                ft.Container(
+                    content=ft.Icon(),
+                    margin=10,
+                    padding=10,
+                    alignment=ft.alignment.center,
+                    bgcolor=ft.colors.GREEN_200,
+                    width=150,
+                    height=150,
+                    border_radius=10,
+                    on_click=lambda e, row=i // 3, col=i % 3: self.on_cell_click(
+                        e, row=row, col=col)
+                )
+            )
+        return self.game_grid
+
+    def on_cell_click(self, e: ft.ContainerTapEvent, row: int, col: int):
+        self.g_state.set_cell_val(row, col)
+        e.control.on_click = None
+        e.control.content = ft.Icon(
+            name='circle_outlined' if self.g_state.current_player == 1 else 'close_outlined',
+            size=20,
+            color=ft.colors.BLACK
+        )
+        if (w := self.g_state.check_winner()) != 0 and w in (win_msg := {
+            1: 'X Won, would you like to continue?',
+            2: '0 Won, would you like to continue?'
+        }):
+            self.show_popup_msg(
+                win_msg[w], self.reset_board, e.page.window_close)
+
+        if (w == 0 and self.g_state.check_empty_space_exists() is False):
+            self.show_popup_msg(
+                'It\'s a Draw. Would you like to continue?', self.reset_board, e.page.window_close)
+        self.update()
+
+    def show_popup_msg(self, msg: str, yes_callback: ClbkFnType, no_callback: ClbkFnType) -> None:
+        def close_dlg(e: ft.ContainerTapEvent, clbk: ClbkFnType) -> None:
+            dlg.open = False
+            self.page.update()
+            clbk()
+
+        dlg = ft.AlertDialog(
+            title=ft.Text('Tic Tac Toe'),
+            content=ft.Text(msg),
+            actions=[
+                ft.TextButton(
+                    'Yes', on_click=lambda e: close_dlg(e, yes_callback)),
+                ft.TextButton(
+                    'No', on_click=lambda e: close_dlg(e, no_callback))
+            ]
+        )
+
+        self.page.dialog = dlg
+        dlg.open = True
+        self.page.update()
+
+    def reset_board(self) -> None:
+        self.g_state.reset()
+
+        self.page.controls.clear()
+        self.page.controls.append(TicTacToe())
+
+        self.page.update()
+        self.update()
 
 
 def main(page: ft.Page) -> None:
@@ -117,9 +121,8 @@ def main(page: ft.Page) -> None:
     page.window_width = 550
     page.window_height = 550
 
-    game = GameState()
-    build_ui(page, game)
-    page.update()
+    app = TicTacToe()
+    page.add(app)
 
 
 if __name__ == '__main__':
