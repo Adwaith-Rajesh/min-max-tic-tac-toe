@@ -92,14 +92,7 @@ class TicTacToe(ft.UserControl):
                 )
                 grid.controls[i].on_click = None
 
-    def on_cell_click(self, e: ft.ContainerTapEvent, row: int, col: int):
-        self.g_state.set_cell_val(row, col)
-        e.control.on_click = None
-        e.control.content = ft.Icon(
-            name='circle_outlined',
-            size=20,
-            color=ft.colors.BLACK
-        )
+    def check_winner_show_popup(self, e: ft.ControlTapEvent) -> None:
         if (w := self.g_state.check_winner()) != 0 and w in (win_msg := {
             1: 'X Won, would you like to continue?',
             2: '0 Won, would you like to continue?'
@@ -111,6 +104,17 @@ class TicTacToe(ft.UserControl):
             self.show_popup_msg(
                 'It\'s a Draw. Would you like to continue?', self.reset_board, e.page.window_close)
 
+    def on_cell_click(self, e: ft.ContainerTapEvent, row: int, col: int):
+        self.g_state.set_cell_val(row, col)
+        e.control.on_click = None
+        e.control.content = ft.Icon(
+            name='circle_outlined',
+            size=20,
+            color=ft.colors.BLACK
+        )
+
+        self.check_winner_show_popup(e)
+
         # next move
         if self.g_state.current_player == 1:
             move = get_best_move(self.g_state.clone())
@@ -119,6 +123,7 @@ class TicTacToe(ft.UserControl):
             self.update()
 
         self.update()
+        self.check_winner_show_popup(e)
 
     def show_popup_msg(self, msg: str, yes_callback: ClbkFnType, no_callback: ClbkFnType) -> None:
         def close_dlg(e: ft.ContainerTapEvent, clbk: ClbkFnType) -> None:
