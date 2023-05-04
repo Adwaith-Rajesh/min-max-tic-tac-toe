@@ -48,7 +48,7 @@ class Utils:
         if (w := self.check_winner()) in (1, 2):
             return True, 10 if w == 1 else -10
 
-        if w == 0 and (not self.check_empty_space_exists()) is False:
+        if w == 0 and (self.check_empty_space_exists() is False):
             return True, 0
 
         return False, 0
@@ -58,7 +58,7 @@ class Utils:
 
 def min_max(state: GameState) -> float:
     # return -> best score
-    if (v := state.in_terminal_state())[0] is False:
+    if (v := state.in_terminal_state())[0] is True:
         return v[1]
 
     print(f'{v=}::{state.board=}::{state.current_player=}')
