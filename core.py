@@ -56,7 +56,7 @@ class Utils:
 # AI always plays X
 
 
-def min_max(state: GameState) -> int:
+def min_max(state: GameState) -> float:
     # return -> best score
     if (v := state.in_terminal_state())[0] is False:
         return v[1]
@@ -72,7 +72,7 @@ def min_max(state: GameState) -> int:
             max_best_score = max(max_best_score, val)
             state.board[move[0]][move[1]] = 0
 
-        return int(max_best_score)
+        return max_best_score
     else:  # minimizing player
         min_best_score = float('inf')
 
@@ -82,7 +82,7 @@ def min_max(state: GameState) -> int:
             min_best_score = min(min_best_score, val)
             state.board[move[0]][move[1]] = 0
 
-        return int(min_best_score)
+        return min_best_score
 
 
 # assuming the current player is the maximizing player

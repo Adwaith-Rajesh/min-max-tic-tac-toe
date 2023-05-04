@@ -1,8 +1,12 @@
+from __future__ import annotations
+
+from copy import deepcopy
 from itertools import product
 from typing import Callable
 
 import flet as ft
 
+from core import get_best_move
 from core import Utils
 
 
@@ -31,6 +35,12 @@ class GameState(Utils):
         for i, j in product(range(0, 3), range(0, 3)):
             self.board[i][j] = 0
         self.current_player = 1
+
+    def clone(self) -> GameState:
+        new_state = GameState()
+        new_state.board = deepcopy(self.board)
+        new_state.current_player = self.current_player
+        return new_state
 
 
 class TicTacToe(ft.UserControl):
@@ -62,13 +72,31 @@ class TicTacToe(ft.UserControl):
                         e, row=row, col=col)
                 )
             )
+
+        # make the first move
+        move = get_best_move(self.g_state.clone())
+        self.g_state.set_cell_val(*move)
+
+        self.set_cells(self.game_grid)
         return self.game_grid
+
+    def set_cells(self, grid: ft.GridView) -> None:
+        print(f'{self.g_state.board=}')
+        for i in range(9):
+            c_v = self.g_state.board[i // 3][i % 3]
+            if c_v != 0:
+                grid.controls[i].content = ft.Icon(
+                    name='close_outlined' if c_v == 1 else 'circle_outlined',
+                    size=20,
+                    color=ft.colors.BLACK
+                )
+                grid.controls[i].on_click = None
 
     def on_cell_click(self, e: ft.ContainerTapEvent, row: int, col: int):
         self.g_state.set_cell_val(row, col)
         e.control.on_click = None
         e.control.content = ft.Icon(
-            name='circle_outlined' if self.g_state.current_player == 1 else 'close_outlined',
+            name='circle_outlined',
             size=20,
             color=ft.colors.BLACK
         )
@@ -82,6 +110,14 @@ class TicTacToe(ft.UserControl):
         if (w == 0 and self.g_state.check_empty_space_exists() is False):
             self.show_popup_msg(
                 'It\'s a Draw. Would you like to continue?', self.reset_board, e.page.window_close)
+
+        # next move
+        if self.g_state.current_player == 1:
+            move = get_best_move(self.g_state.clone())
+            self.g_state.set_cell_val(*move)
+            self.set_cells(self.game_grid)
+            self.update()
+
         self.update()
 
     def show_popup_msg(self, msg: str, yes_callback: ClbkFnType, no_callback: ClbkFnType) -> None:
